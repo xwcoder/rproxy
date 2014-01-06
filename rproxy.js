@@ -60,8 +60,9 @@ var proxyServer = http.createServer( function ( req, res ) {
 
     var contentType = mime[ ext ];
     if ( !contentType ) {
-        res.writeHead( 500, { 'content-type' : 'text/plain' } );
-        res.end( 'Error: 不支持文件类型 ' + ext );
+        //res.writeHead( 500, { 'content-type' : 'text/plain' } );
+        //res.end( 'Error: 不支持文件类型 ' + ext );
+        proxyTo( server, req, res );
         return;
     }
 
