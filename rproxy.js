@@ -8,6 +8,7 @@ var mime = require( './mime' );
 var proxyTo = function ( server, req, res ) {
 
     req.headers[ 'x-forwarded-for' ] = req.connection.remoteAddress;
+
     var proxyRequest = http.request( {
         host : server.proxy_pass,
         port : server.port || 80,
