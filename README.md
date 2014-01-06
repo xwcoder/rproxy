@@ -3,7 +3,7 @@ rproxy
 
 一个简单的http反向代理
 
-使用：<code>sudo node rproxy</code>
+使用：<code>sudo node rproxy.js</code>
 
 配置文件：config.js。参考了nginx的配置文件。
 
