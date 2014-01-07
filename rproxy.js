@@ -2,8 +2,20 @@ var http = require( 'http' );
 var url = require( 'url' );
 var path = require( 'path' );
 var fs = require( 'fs' );
-var config = require( './config' );
+//var config = require( './config' );
 var mime = require( './mime' );
+
+var config;
+var args = process.argv.slice( 2 );
+if ( args[ 0 ] == '-c' && args[ 1 ] ) {
+    var configPath = args[ 1 ];
+    if ( /^[^\.\/]/.test( configPath ) ) {
+        configPath = './' + configPath;
+    }
+    config = require( configPath );
+} else {
+    var config = require( './config' );
+}
 
 var proxyTo = function ( server, req, res ) {
 
@@ -75,6 +87,7 @@ var proxyServer = http.createServer( function ( req, res ) {
     fs.open( filename, 'r', function ( err, fd ) {
         if ( err ) {
             proxyTo( server, req, res );
+            fs.close( fd );
         } else {
             fs.readFile( filename, function ( err, data ) {
                 if ( err ) {
@@ -82,18 +95,26 @@ var proxyServer = http.createServer( function ( req, res ) {
                     return;
                 }
 
-                var charset = 'utf-8';
-                if ( data.toString( charset ).indexOf( '�' ) != -1 ) {
-                    charset = 'gbk';
+                var ext = path.extname( filename ).toLowerCase();
+                if ( ext == '.js' ) {
+                    var charset = 'utf-8';
+                    if ( data.toString( charset ).indexOf( '�' ) != -1 ) {
+                        charset = 'gbk';
+                    }
+                    contentType = contentType + ';charset=' + charset;
                 }
-                res.writeHead( 200, { 'content-type' : contentType + ';charset=' + charset } );
+                res.writeHead( 200, { 'content-type' : contentType } );
                 res.end( data, 'binary' );
+                fs.close( fd );
             } );
         }
     } );
-
 } );
 
-proxyServer.listen( config.port || 80 );
+proxyServer.listen( config.port || 80, config.host || '127.0.0.1' );
 
 process.on( 'uncaughtException', function () {} );
+
+if ( config.pid ) {
+    fs.writeFile( config.pid, process.pid );
+}

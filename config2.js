@@ -1,6 +1,6 @@
 var path = require( 'path' );
 module.exports = {
-    host : '127.0.0.1',
+    host : '192.168.1.103',
     pid : '/Users/xwcoder/code/rproxy/config.pid',
     servers : [
         {
