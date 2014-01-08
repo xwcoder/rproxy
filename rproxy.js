@@ -111,7 +111,11 @@ var proxyServer = http.createServer( function ( req, res ) {
     } );
 } );
 
-proxyServer.listen( config.port || 80, config.host || '127.0.0.1' );
+if ( !config.host || config.host == '127.0.0.1'  ) {
+    proxyServer.listen( config.port || 80 );
+} else {
+    proxyServer.listen( config.port || 80, config.host );
+}
 
 process.on( 'uncaughtException', function () {} );
 

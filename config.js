@@ -1,11 +1,11 @@
 var path = require( 'path' );
 module.exports = {
     host : '127.0.0.1',
-    pid : '/Users/xwcoder/code/rproxy/config.pid',
+    pid : '/home/xwcoder/rproxy.pid',
     servers : [
         {
             name : 'js.tv.itc.cn',
-            root : '/Users/xwcoder/code/tv/js',
+            root : '/home/xwcoder/code/tv/js',
             proxy_pass : '61.135.181.167',
             rewrite : function ( filename, req ) {
 
@@ -26,7 +26,7 @@ module.exports = {
         },
         {
             name : 'css.tv.itc.cn',
-            root : '/Users/xwcoder/code/tv/css',
+            root : '/home/xwcoder/code/tv/css',
             proxy_pass : '61.135.181.167'
         },
         {
