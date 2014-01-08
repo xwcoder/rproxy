@@ -1,11 +1,11 @@
 var path = require( 'path' );
 module.exports = {
-    host : '192.168.1.103',
-    pid : '/Users/xwcoder/code/rproxy/config.pid',
+    host : '127.0.0.1',
+    pid : '/home/xwcoder/rproxy.pid',
     servers : [
         {
             name : 'js.tv.itc.cn',
-            root : '/Users/xwcoder/code/tv/js',
+            root : '/home/xwcoder/code/tv/js',
             proxy_pass : '61.135.181.167',
             rewrite : function ( filename, req ) {
 
@@ -13,11 +13,11 @@ module.exports = {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+?(\d+).js$/.test( filename ) ) {
+                if ( /\S+(_\S+).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+(_\S+).js$/.test( filename ) ) {
+                if ( /\S+?(\d+).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
@@ -26,7 +26,7 @@ module.exports = {
         },
         {
             name : 'css.tv.itc.cn',
-            root : '/Users/xwcoder/code/tv/css',
+            root : '/home/xwcoder/code/tv/css',
             proxy_pass : '61.135.181.167'
         },
         {

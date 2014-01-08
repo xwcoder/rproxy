@@ -18,7 +18,11 @@ if ( args[ 0 ] == '-c' && args[ 1 ] ) {
 }
 
 var proxyTo = function ( server, req, res ) {
-
+    
+    if ( !server.proxy_pass ) {
+        res.writeHead( 404, { 'content-type' : 'text/plain' } );
+        res.end( 'not found ' + req.url );
+    }
     req.headers[ 'x-forwarded-for' ] = req.connection.remoteAddress;
 
     var proxyRequest = http.request( {
@@ -72,13 +76,12 @@ var proxyServer = http.createServer( function ( req, res ) {
 
     var contentType = mime[ ext ];
     if ( !contentType ) {
-        //res.writeHead( 500, { 'content-type' : 'text/plain' } );
-        //res.end( 'Error: 不支持文件类型 ' + ext );
         proxyTo( server, req, res );
         return;
     }
 
-    var filename = path.join( server.root, pathname );
+    var originFile = path.join( server.root, pathname );
+    var filename = originFile;
 
     if ( typeof server.rewrite == 'function' ) {
         filename = server.rewrite( filename, pathname, req );
@@ -86,8 +89,31 @@ var proxyServer = http.createServer( function ( req, res ) {
 
     fs.open( filename, 'r', function ( err, fd ) {
         if ( err ) {
-            proxyTo( server, req, res );
-            fs.close( fd );
+            fs.open( originFile, 'r', function ( err, fd ) {
+                if ( err ) {
+                    proxyTo( server, req, res );
+                } else {
+                    fs.readFile( originFile, function ( err, data ) {
+                        if ( err ) {
+                            proxyTo( server, req, res );
+                            return;
+                        }
+
+                        var ext = path.extname( originFile ).toLowerCase();
+                        if ( ext == '.js' ) {
+                            var charset = 'utf-8';
+                            if ( data.toString( charset ).indexOf( '�' ) != -1 ) {
+                                charset = 'gbk';
+                            }
+                            contentType = contentType + ';charset=' + charset;
+                        }
+                        res.writeHead( 200, { 'content-type' : contentType } );
+                        res.end( data, 'binary' );
+                        fs.close( fd );
+                    } );
+                }
+            } );
+            //proxyTo( server, req, res );
         } else {
             fs.readFile( filename, function ( err, data ) {
                 if ( err ) {
@@ -111,10 +137,10 @@ var proxyServer = http.createServer( function ( req, res ) {
     } );
 } );
 
-if ( !config.host || config.host == '127.0.0.1'  ) {
-    proxyServer.listen( config.port || 80 );
-} else {
+if ( config.host ) {
     proxyServer.listen( config.port || 80, config.host );
+} else {
+    proxyServer.listen( config.port || 80 );
 }
 
 process.on( 'uncaughtException', function () {} );
