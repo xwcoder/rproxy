@@ -33,7 +33,7 @@
     };
 
     var checkIllegalCharactor = function(topic){
-        var m = /[^a-zA-Z0-9-_\.\*]/.exec(topic);
+        var m = /[^a-zA-Z0-9-_\.\*\/]/.exec(topic);
         if(m){
             throwException('illegalCharactor:' + m[1]);
         }
