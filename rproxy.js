@@ -89,31 +89,34 @@ var proxyServer = http.createServer( function ( req, res ) {
 
     fs.open( filename, 'r', function ( err, fd ) {
         if ( err ) {
-            fs.open( originFile, 'r', function ( err, fd ) {
-                if ( err ) {
-                    proxyTo( server, req, res );
-                } else {
-                    fs.readFile( originFile, function ( err, data ) {
-                        if ( err ) {
-                            proxyTo( server, req, res );
-                            return;
-                        }
-
-                        var ext = path.extname( originFile ).toLowerCase();
-                        if ( ext == '.js' ) {
-                            var charset = 'utf-8';
-                            if ( data.toString( charset ).indexOf( '�' ) != -1 ) {
-                                charset = 'gbk';
+            if ( filename == originFile ) {
+                proxyTo( server, req, res );
+            } else { 
+                fs.open( originFile, 'r', function ( err, fd ) {
+                    if ( err ) {
+                        proxyTo( server, req, res );
+                    } else {
+                        fs.readFile( originFile, function ( err, data ) {
+                            if ( err ) {
+                                proxyTo( server, req, res );
+                                return;
                             }
-                            contentType = contentType + ';charset=' + charset;
-                        }
-                        res.writeHead( 200, { 'content-type' : contentType } );
-                        res.end( data, 'binary' );
-                        fs.close( fd );
-                    } );
-                }
-            } );
-            //proxyTo( server, req, res );
+
+                            var ext = path.extname( originFile ).toLowerCase();
+                            if ( ext == '.js' ) {
+                                var charset = 'utf-8';
+                                if ( data.toString( charset ).indexOf( '�' ) != -1 ) {
+                                    charset = 'gbk';
+                                }
+                                contentType = contentType + ';charset=' + charset;
+                            }
+                            res.writeHead( 200, { 'content-type' : contentType } );
+                            res.end( data, 'binary' );
+                            fs.close( fd );
+                        } );
+                    }
+                } );
+            }
         } else {
             fs.readFile( filename, function ( err, data ) {
                 if ( err ) {
