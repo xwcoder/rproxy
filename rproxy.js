@@ -57,6 +57,7 @@ var loadFile = function ( serverConfig, req, res ) {
 
     var pathname = url.parse( req.url ).pathname;
     var ext = path.extname( pathname );
+    ext && ( ext = ext.split( '.' )[ 1 ] );
     var contentType = mime[ ext ];
 
     var originFile = path.join( serverConfig.root, pathname );
