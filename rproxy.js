@@ -24,6 +24,7 @@ var proxyTo = function ( server, req, res ) {
         res.end( 'not found' );
     }
     req.headers[ 'x-forwarded-for' ] = req.connection.remoteAddress;
+    req.headers[ 'if-modified-since' ] = ( new Date( 1970, 0, 1 ) ).toUTCString();
 
     var proxyRequest = http.request( {
         host : server.proxy_pass,
@@ -32,8 +33,10 @@ var proxyTo = function ( server, req, res ) {
         path : url.parse( req.url ).pathname,
         headers : req.headers
     }, function ( proxyResponse ) {
-
-        res.writeHead( proxyResponse.statusCode, proxyResponse.headers );
+        
+        var headers = proxyResponse.headers;
+        headers[ 'Expires' ] = -1;
+        res.writeHead( proxyResponse.statusCode, headers );
 
         proxyResponse.on( 'data', function ( data ) {
             res.write( data, 'binary' );
