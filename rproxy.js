@@ -57,7 +57,6 @@ var proxyTo = function ( server, req, res ) {
 };
 
 var loadFile = function ( serverConfig, req, res ) {
-
     var pathname = url.parse( req.url ).pathname;
     var ext = path.extname( pathname );
     ext && ( ext = ext.split( '.' )[ 1 ] );
@@ -69,7 +68,6 @@ var loadFile = function ( serverConfig, req, res ) {
     if ( typeof serverConfig.rewrite == 'function' ) {
         filename = serverConfig.rewrite( filename, req );
     }
-
     fs.open( filename, 'r', function ( err, fd ) {
         if ( err ) {
             if ( filename == originFile ) {
@@ -159,10 +157,10 @@ var loadConcatFile = function ( serverConfig, pathnames, contentType, req, res )
     //res.write( 'hello world tian' );
     //res.end();
 };
-
 var proxyServer = http.createServer( function ( req, res ) {
     var host = req.headers.host;    
     var serverConfig;
+
     config.servers.every( function ( item ) {
         if ( item.name == host ) {
             serverConfig = item;
@@ -178,17 +176,16 @@ var proxyServer = http.createServer( function ( req, res ) {
     }
 
     var pathname = url.parse( req.url ).pathname;
+    if ( typeof serverConfig.rewrite == 'function' ) {
+        pathname = serverConfig.rewrite( pathname, req );
+    }
+
     var ext = path.extname( pathname );
     ext && ( ext = ext.split( '.' )[ 1 ] );
-
     var contentType = mime[ ext ];
     if ( !contentType ) {
         proxyTo( serverConfig, req, res );
         return;
-    }
-
-    if ( typeof serverConfig.rewrite == 'function' ) {
-        pathname = serverConfig.rewrite( pathname, req );
     }
 
     if ( serverConfig.concatFile && serverConfig.concatFile[ pathname ] ) {

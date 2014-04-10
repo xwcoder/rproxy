@@ -1,5 +1,6 @@
 module.exports = {
     "html": "text/html",
+    "htm": "text/html",
     "js": "text/javascript",
     "css": "text/css",
     "gif": "image/gif",

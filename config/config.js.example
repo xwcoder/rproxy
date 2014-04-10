@@ -13,11 +13,11 @@ module.exports = {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+(_\S+).js$/.test( filename ) ) {
+                if ( /\S+?(\d+).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+?(\d+).js$/.test( filename ) ) {
+                if ( /\S+(_\S+).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
