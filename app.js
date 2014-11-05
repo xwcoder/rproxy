@@ -68,13 +68,13 @@ var app = {
 
                 if ( err ) {
                     hasError = true;
-                    this.responseSingleFile( req, res, serverConfig, urlInfo );
+                    app.responseSingleFile( req, res, serverConfig, urlInfo );
                 } else {
                     array[ index ] = data;
                     mb.publish( file );
                 }
             } );
-        }.bind( this ) );
+        } );
     },
 
     responseSingleFile: function ( req, res, serverConfig, urlInfo ) {
@@ -99,18 +99,18 @@ var app = {
             fs.open( filename, 'r', function ( err, fd ) {
                 if ( err ) {
                     if ( filename == originFile ) {
-                        this.proxyTo( req, res, serverConfig );
+                        app.proxyTo( req, res, serverConfig );
                     } else {
                         fs.open( originFile, 'r', function ( err, fd ) {
 
                             if ( err ) {
-                                this.proxyTo( req, res, serverConfig );
+                                app.proxyTo( req, res, serverConfig );
                             } else {
 
                                 fs.readFile( originFile, function ( err, data ) {
 
                                     if ( err ) {
-                                        this.proxyTo( req, res, serverConfig );
+                                        app.proxyTo( req, res, serverConfig );
                                     } else {
 
                                         var charset = 'utf-8';
@@ -124,17 +124,17 @@ var app = {
                                         fs.close( fd );
                                     }
 
-                                }.bind( this ) );
+                                } );
                             }
 
-                        }.bind( this ) );
+                        } );
                     }
                 } else {
                     
                     fs.readFile( filename, function ( err, data ) {
 
                         if ( err ) {
-                            this.proxyTo( req, res, serverConfig );
+                            app.proxyTo( req, res, serverConfig );
                         } else {
 
                             var charset = 'utf-8';
@@ -148,10 +148,10 @@ var app = {
                             fs.close( fd );
                         }
 
-                    }.bind( this ) );
+                    } );
                 }
 
-            }.bind( this ) );
+            } );
 
         } else { //用流的方式response
 
@@ -161,11 +161,11 @@ var app = {
 
                 if ( err ) {
                     if ( filename == originFile ) {
-                        this.proxyTo( req, res, serverConfig );
+                        app.proxyTo( req, res, serverConfig );
                     } else {
                         fs.open( originFile, 'r', function ( err, fd ) {
                             if ( err ) {
-                                this.proxyTo( req, res, serverConfig );
+                                app.proxyTo( req, res, serverConfig );
                             } else {
                                 res.writeHead( 200, { 'content-type' : contentType } );
 
@@ -179,7 +179,7 @@ var app = {
                                     fs.close( fd );
                                 } );
                             }
-                        }.bind( this ) );
+                        } );
                     }
                 } else {
 
@@ -196,7 +196,7 @@ var app = {
                     } );
                 }
 
-            }.bind( this ) );
+            } );
         }
     },
 
@@ -269,7 +269,7 @@ var app = {
             } );
         }
 
-        var config = this.config;
+        var config = app.config;
         var host = req.headers.host.split( ':' )[ 0 ];    
 
         var serverConfig;
@@ -288,7 +288,7 @@ var app = {
             return;
         }
 
-        var urlInfo = this.parseUrl( req.url );
+        var urlInfo = app.parseUrl( req.url );
         var pathname = urlInfo.pathname;
 
         if ( typeof serverConfig.rewrite == 'function' ) {
@@ -298,14 +298,14 @@ var app = {
         urlInfo.extname = PATH.extname( pathname );
 
         if ( !mime[ urlInfo.extname ] ) {
-            this.proxyTo( req, res, serverConfig );
+            app.proxyTo( req, res, serverConfig );
             return;
         }
 
         if ( serverConfig.concatFile && serverConfig.concatFile[ pathname ] ) {
-            this.responseConcatFile( req, res, serverConfig, urlInfo );
+            app.responseConcatFile( req, res, serverConfig, urlInfo );
         } else {
-            this.responseSingleFile( req, res, serverConfig, urlInfo );
+            app.responseSingleFile( req, res, serverConfig, urlInfo );
         }
     },
 
