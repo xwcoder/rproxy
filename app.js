@@ -321,6 +321,13 @@ var app = {
             this.server.listen( config.port || 80 );
         }
 
+        this.server.on( 'clientError', function ( err, socket ) {
+            console.log( new Date() );
+            console.log( err );
+            console.log( err.stack );
+            socket.destroy();
+        } );
+
         if ( config.pid ) {
             fs.writeFile( config.pid, process.pid );
         }
