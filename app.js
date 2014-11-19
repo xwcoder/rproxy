@@ -212,6 +212,12 @@ var app = {
         headers[ 'x-forwarded-for' ] = req.connection.remoteAddress;
         headers[ 'if-modified-since' ] = ( new Date( 1970, 0, 1 ) ).toUTCString();
 
+        // {connection:keep-alive}可以造成ECONNRESET
+        // https://github.com/nodejitsu/node-http-proxy/issues/579
+        // https://github.com/nodejitsu/node-http-proxy/pull/488
+        // https://github.com/nodejitsu/node-http-proxy/issues/496
+        delete headers.connection;
+
         var proxyRequest = http.request( {
             host : serverConfig.proxy_pass,
             port : serverConfig.port || 80,
@@ -231,6 +237,10 @@ var app = {
             } );
             
             proxyResponse.on( 'end', function () {
+                res.end();    
+            } );
+
+            proxyResponse.on( 'error', function () {
                 res.end();    
             } );
 
