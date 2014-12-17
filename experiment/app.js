@@ -2,10 +2,8 @@ var http = require( 'http' );
 var URL = require( 'url' );
 var PATH = require( 'path' );
 var fs = require( 'fs' );
-var mime = require( './lib/mime' );
-var MessageBus = require( './lib/messagebus' );
-
-var httpProxy = require('http-proxy');
+var mime = require( './mime' );
+var MessageBus = require( './messagebus' );
 
 //var config = require( './config/config2.js' );
 
@@ -21,9 +19,6 @@ if ( args[ 0 ] ) {
 } else {
     config = require( './config' );
 }
-
-
-var proxy = httpProxy.createProxyServer();
 
 var app = {
 
@@ -212,9 +207,61 @@ var app = {
             res.end( 'not found: no proxy_pass_server' );
         }
 
-        proxy.web( req, res, {
-            target: serverConfig.proxy_pass
+        var headers = req.headers;
+        
+        headers[ 'x-forwarded-for' ] = req.connection.remoteAddress;
+        headers[ 'if-modified-since' ] = ( new Date( 1970, 0, 1 ) ).toUTCString();
+
+        // {connection:keep-alive}可以造成ECONNRESET
+        // https://github.com/nodejitsu/node-http-proxy/issues/579
+        // https://github.com/nodejitsu/node-http-proxy/pull/488
+        // https://github.com/nodejitsu/node-http-proxy/issues/496
+        delete headers.connection;
+
+        var proxyRequest = http.request( {
+            host : serverConfig.proxy_pass,
+            port : serverConfig.port || 80,
+            method : req.method,
+            path : req.url,
+            headers : req.headers
+
+        }, function ( proxyResponse ) {
+            
+            var headers = proxyResponse.headers;
+            headers[ 'Expires' ] = -1;
+
+            res.writeHead( proxyResponse.statusCode, headers );
+
+            proxyResponse.on( 'data', function ( data ) {
+                res.write( data, 'binary' );
+            } );
+            
+            proxyResponse.on( 'end', function () {
+                res.end();    
+            } );
+
+            proxyResponse.on( 'error', function () {
+                res.end();    
+            } );
+
         } );
+        
+        proxyRequest.on( 'error', function () {
+            res.writeHead( 500, { 'content-type' : 'text/plain' } );
+            res.end( 'Error to request' );
+        } );
+        
+        if ( req.method == 'POST' ) {
+            if ( req.rawBody ) {
+                proxyRequest.end( req.rawBody );
+            } else {
+                req.on( 'end', function () {
+                    proxyRequest.end( req.rawBody );
+                } );
+            }
+        } else {
+            proxyRequest.end();
+        }
     },
 
     handler: function ( req, res ) {
@@ -248,11 +295,6 @@ var app = {
         if ( !serverConfig ) {
             res.writeHead( 500, { 'content-type' : 'text/plain' } );
             res.end( 'no server' );
-            return;
-        }
-
-        if ( req.method == 'POST' ) {
-            app.proxyTo( req, res, serverConfig );
             return;
         }
 
