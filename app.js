@@ -25,6 +25,12 @@ if ( args[ 0 ] ) {
 
 var proxy = httpProxy.createProxyServer();
 
+proxy.on( 'error', function ( err, req, res ) {
+    console.log( 'proxy error...' );
+    res.writeHead( 500, { 'content-type': 'text/plain' } );
+    res.end( 'proxy error' );
+} );
+
 var app = {
 
     config: config,
@@ -218,19 +224,6 @@ var app = {
     },
 
     handler: function ( req, res ) {
-
-        if ( req.method == 'POST' ) {
-
-            var data = new Buffer( '' );
-
-            req.on( 'data', function ( chunk ) {
-                data = Buffer.concat( [ data, chunk ] );
-            } );
-
-            req.on( 'end', function () {
-                req.rawBody = data;
-            } );
-        }
 
         var config = app.config;
         var host = req.headers.host.split( ':' )[ 0 ];    
