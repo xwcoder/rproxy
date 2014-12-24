@@ -25,10 +25,9 @@ if ( args[ 0 ] ) {
 
 var proxy = httpProxy.createProxyServer();
 
-proxy.on( 'error', function ( err, req, res ) {
+proxy.on( 'error', function ( err ) {
     console.log( 'proxy error...' );
-    res.writeHead( 500, { 'content-type': 'text/plain' } );
-    res.end( 'proxy error' );
+    console.log( arguments.length );
 } );
 
 var app = {
