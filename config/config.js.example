@@ -7,19 +7,47 @@ module.exports = {
             proxy_pass : 'http://61.135.132.59',
             rewrite : function ( filename, req ) {
 
-                if ( /\S+?(_\d+).js$/.test( filename ) ) {
+                if ( /\S+?(_\d{8}).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+?(\d+).js$/.test( filename ) ) {
+                if ( /\S+?(\d{8}).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
-                if ( /\S+(_\S+).js$/.test( filename ) ) {
+                if ( /\S+(_\S{6}).js$/.test( filename ) ) {
                     return filename.replace( RegExp.$1, '' );
                 }
 
                 return filename;
+            },
+            concatFile : {
+                '/site/pad/video.js' : [
+                    'site/pad/video/intro.js',    
+                    'site/pad/video/videotrace.js',    
+                    'site/pad/video/playlist.js',    
+                    'site/pad/video/ugcplaylist.js',    
+                    'site/pad/video/kdlist.js',    
+                    'site/pad/video/adplugin.js',    
+                    'site/pad/video/player.js',    
+                    'site/pad/video/feeplayer.js',    
+                    'site/pad/video/factory.js',    
+                    'site/pad/video/outro.js',    
+                    'site/pad/video/speedtest.js',    
+                ],
+                '/site/pad/v2/video.js' : [
+                    'site/pad/v2/video/intro.js',    
+                    'site/pad/v2/video/videotrace.js',    
+                    'site/pad/v2/video/playlist.js',    
+                    'site/pad/v2/video/ugcplaylist.js',    
+                    'site/pad/v2/video/kdlist.js',    
+                    'site/pad/v2/video/adplugin.js',    
+                    'site/pad/v2/video/player.js',    
+                    'site/pad/v2/video/feeplayer.js',    
+                    'site/pad/v2/video/factory.js',    
+                    'site/pad/v2/video/outro.js',    
+                    'site/pad/v2/video/speedtest.js',    
+                ]
             }
         },
         {
