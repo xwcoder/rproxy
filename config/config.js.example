@@ -4,7 +4,7 @@ module.exports = {
         {
             name : 'js.tv.itc.cn',
             root : '/Users/creep/code/tv/js',
-            proxy_pass : '61.135.181.167',
+            proxy_pass : 'http://61.135.132.59',
             rewrite : function ( filename, req ) {
 
                 if ( /\S+?(_\d+).js$/.test( filename ) ) {
@@ -25,17 +25,17 @@ module.exports = {
         {
             name : 'css.tv.itc.cn',
             root : '/Users/creep/code/tv/css',
-            proxy_pass : '61.135.181.167'
+            proxy_pass : 'http://61.135.132.59'
         },
         {
             name : 'img.tv.itc.cn',
             root : '/Users/creep/code/tv/img',
-            proxy_pass : '61.135.181.167'
+            proxy_pass : 'http://61.135.132.59',
         },
         {
             name : 'tv.sohu.com',
             root : '/Users/creep/code/sohu',
-            proxy_pass : '61.135.132.59',
+            proxy_pass : 'http://61.135.132.59',
             rewrite : function ( filename ) {
 
                 if ( path.extname( filename ) == '.js' && !/\.src\./i.test( filename ) ) {
