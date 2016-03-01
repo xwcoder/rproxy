@@ -24,7 +24,7 @@ if (args[0]) {
 }
 
 proxy.on('error', function (err) {
-  console.log('proxy error-->', error);
+  console.log('proxy error-->', err);
 });
 
 var app = {
