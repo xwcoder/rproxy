@@ -1,254 +1,173 @@
-var http = require('http'),
-    URL = require('url'),
-    PATH = require('path'),
-    fs = require('fs'),
-    mime = require('./lib/mime'),
-    httpProxy = require('http-proxy');
+const PATH = require('path')
+const fs = require('fs')
+const mime = require('./lib/mime')
+const httpProxy = require('http-proxy')
+const Koa = require('koa')
 
-var Koa = require('koa')
-var app = new Koa()
+const proxy = httpProxy.createProxyServer()
+const app = new Koa()
 
-app.use(async ctx => {
-  ctx.body = 'hello world async 2'
+const {configFilePath, config} = (x => {
+
+  var args = process.argv.slice(2)
+
+  var configFilePath = args[0] || './config'
+
+  if (/^[^\.\/]/.test(configFilePath)) {
+    configFilePath = './' + configFilePath
+  }
+
+  var config = require(configFilePath);
+
+  return {config, configFilePath}
+
+})()
+
+const openFile = (path, flag) => {
+
+  return new Promise((resolve, reject) => {
+    fs.open(path, flag, (err, fd) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(fd)
+      }
+    })
+  })
+}
+
+const readFile = (file, options) => {
+
+  return new Promise((resolve, reject) => {
+    fs.readFile(file, options, (err, data) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(data)
+      }
+    })
+  })
+}
+
+const responseWithCharset = async (file, ctx) => {
+
+  var r = false
+
+  try {
+
+    var fd = await openFile(file, 'r')
+    var data = await readFile(fd)
+    var charset = data.toString(charset).indexOf('�') != -1 ? 'gbk' : 'utf-8'
+
+    ctx.type =  ctx.type + ';charset=' + charset
+    ctx.body = data
+
+    r = true
+
+  } catch (e) {
+  } finally {
+    if (fd) {
+      fs.close(fd)
+    }
+  }
+
+  return r
+}
+
+const proxyToHttp = (serverConfig, ctx) => {
+
+  var url = serverConfig.proxy_pass
+  if (!url) {
+    return ctx.status(405);
+  }
+
+  ctx.respond = false
+
+  if (!/^http(s)?:\/\//.test(url)) {
+    url = ctx.protocol + '://' + url
+  }
+
+  proxy.web(ctx.req, ctx.res, {
+    target: url
+  })
+}
+
+const responseAdStream = async (file, ctx) => {
+
+  var r = false
+
+  try {
+
+    var fd = openFile(filePath, 'r')
+    ctx.body = fs.createReadStream(null, {fd})
+
+    r = true
+  } catch (e) {
+  } finally {
+    if (fd) {
+      fs.close(fd)
+    }
+  }
+}
+
+app.use(async (ctx, next) => {
+  ctx.configFilePath = configFilePath
+  ctx.set('Access-Control-Allow-Origin', '*')
+  await next()
 })
 
-//app.use(ctx => {
-//  ctx.body = 'hello world'
-//})
+app.use(async (ctx, next) => {
 
-app.listen(80)
+  var hostname = ctx.hostname
+  var serverConfig
 
+  config.servers.some(item => {
+    if (item.name == hostname) {
+      serverConfig = item
+      return true
+    }
+  })
 
-//var config,
-//    args = process.argv.slice( 2 ),
-//    proxy = httpProxy.createProxyServer();
-//
-//if (args[0]) {
-//  var configPath = args[0];
-//
-//  if (/^[^\.\/]/.test(configPath)) {
-//    configPath = './' + configPath;
-//  }
-//
-//  config = require(configPath);
-//
-//} else {
-//  config = require('./config');
-//}
-//
-//proxy.on('error', function (err) {
-//  console.log('proxy error-->', err);
-//});
-//
-//var app = {
-//
-//  config: config,
-//
-//  parseUrl: function (url) {
-//    var url = URL.parse(url);
-//    url.extname = PATH.extname(url.pathname);
-//
-//    return url;
-//  },
-//
-//  responseSingleFile: function (req, res, serverConfig, urlInfo) {
-//
-//    var contentType = mime[urlInfo.extname],
-//        originFile = PATH.join(serverConfig.root, urlInfo.pathname),
-//        filename = urlInfo.pathname;
-//
-//    if (typeof serverConfig.rewrite == 'function') {
-//      filename = serverConfig.rewrite(filename, req);
-//    }
-//
-//    if (typeof serverConfig.setHeader == 'function') {
-//      serverConfig.setHeader(res, req, filename);
-//    }
-//
-//    filename = PATH.join(serverConfig.root, filename);
-//
-//    var extname = PATH.extname(filename).toLowerCase(),
-//        readbleExts = ['.js'];
-//
-//    if (readbleExts.indexOf(extname) != -1) { //全部读到内存中再response
-//
-//      fs.open(filename, 'r', function (err, fd) {
-//        if (err) {
-//          if (filename == originFile) {
-//            app.proxyTo(req, res, serverConfig);
-//          } else {
-//            fs.open(originFile, 'r', function (err, fd) {
-//
-//              if (err) {
-//                app.proxyTo(req, res, serverConfig);
-//              } else {
-//
-//                fs.readFile(originFile, function (err, data) {
-//
-//                  if (err) {
-//                    app.proxyTo(req, res, serverConfig);
-//                  } else {
-//                    var charset = 'utf-8';
-//                    if (data.toString(charset).indexOf('�') != -1) {
-//                      charset = 'gbk';
-//                    }
-//
-//                    contentType = contentType + ';charset=' + charset;
-//
-//                    res.writeHead(200, {'content-type': contentType});
-//                    res.end(data, 'binary');
-//                    fs.close(fd);
-//                  }
-//                });
-//              }
-//            } );
-//          }
-//        } else {
-//          fs.readFile(filename, function (err, data) {
-//
-//            if (err) {
-//              app.proxyTo(req, res, serverConfig);
-//            } else {
-//
-//              var charset = 'utf-8';
-//              if (data.toString(charset).indexOf('�') != -1) {
-//                charset = 'gbk';
-//              }
-//
-//              contentType = contentType + ';charset=' + charset;
-//
-//              res.writeHead(200, {'content-type': contentType});
-//              res.end(data, 'binary');
-//              fs.close(fd);
-//            }
-//          } );
-//        }
-//      } );
-//
-//    } else { //用流的方式response
-//
-//      fs.open(filename, 'r', function (err, fd) {
-//
-//        var stream;
-//
-//        if (err) {
-//          if (filename == originFile) {
-//            app.proxyTo(req, res, serverConfig);
-//          } else {
-//            fs.open(originFile, 'r', function (err, fd) {
-//              if (err) {
-//                app.proxyTo(req, res, serverConfig);
-//              } else {
-//                res.writeHead(200, {'content-type': contentType});
-//
-//                stream = fs.createReadStream(filename);
-//                stream.on('data', function (data) {
-//                  res.write(data);
-//                });
-//
-//                stream.on('end', function () {
-//                  res.end();
-//                  fs.close(fd);
-//                });
-//              }
-//            });
-//          }
-//        } else {
-//
-//          res.writeHead( 200, {'content-type': contentType});
-//
-//          stream = fs.createReadStream(filename);
-//          stream.on('data', function (data) {
-//            res.write(data);
-//          });
-//
-//          stream.on('end', function () {
-//            res.end();
-//            fs.close(fd);
-//          });
-//        }
-//      });
-//    }
-//  },
-//
-//  proxyTo: function (req, res, serverConfig) {
-//
-//    if (!serverConfig.proxy_pass) {
-//      res.writeHead(404, {'content-type': 'text/plain'});
-//      res.end('not found: no proxy_pass_server');
-//    }
-//
-//    proxy.web(req, res, {
-//      target: serverConfig.proxy_pass
-//    });
-//  },
-//
-//  handler: function (req, res) {
-//
-//    var config = app.config,
-//        host = req.headers.host.split(':')[0],
-//        serverConfig;
-//
-//    config.servers.every(function (item) {
-//      if (item.name == host) {
-//        serverConfig = item;
-//        return false;
-//      }
-//      return true;
-//    });
-//
-//    if (!serverConfig) {
-//      res.writeHead(500, {'content-type': 'text/plain'});
-//      res.end('no server');
-//      return;
-//    }
-//
-//    if (req.method == 'POST') {
-//      app.proxyTo(req, res, serverConfig);
-//      return;
-//    }
-//
-//    var urlInfo = app.parseUrl(req.url),
-//        pathname = urlInfo.pathname;
-//
-//    if (typeof serverConfig.rewrite == 'function') {
-//      pathname = serverConfig.rewrite(pathname, req);
-//    }
-//
-//    urlInfo.extname = PATH.extname(pathname);
-//
-//    if (!mime[urlInfo.extname]) {
-//      app.proxyTo(req, res, serverConfig);
-//      return;
-//    }
-//
-//    app.responseSingleFile(req, res, serverConfig, urlInfo);
-//  },
-//
-//  init: function () {
-//
-//    var config = this.config;
-//
-//    this.server = http.createServer(this.handler.bind(this));
-//
-//    if (config.host) {
-//      this.server.listen(config.port || 80, config.host);
-//    } else {
-//      this.server.listen(config.port || 80);
-//    }
-//
-//    this.server.on('clientError', function (err, socket) {
-//      console.log( new Date() );
-//      console.log( err );
-//      console.log( err.stack );
-//      socket.destroy();
-//    });
-//
-//    if (config.pid) {
-//      fs.writeFile(config.pid, process.pid);
-//    }
-//    console.log('listening on \d', config.port || 80);
-//  }
-//};
-//
-////app.init();
+  if (!serverConfig) {
+    ctx.status = 404
+    return ctx.body = 'no server:' + hostname
+  }
+
+  if (ctx.method === 'POST') {
+    return proxyToHttp(serverConfig, ctx)
+  }
+
+  var path = ctx.path
+  if (typeof serverConfig.rewrite === 'function') {
+    path = serverConfig.rewrite(path)
+  }
+
+  var extname = PATH.extname(path).toLowerCase()
+
+  ctx.type = mime[extname]
+
+  var filePath = PATH.join(serverConfig.root, path)
+  var originFilePath = PATH.join(serverConfig.root, ctx.path)
+
+  var files = filePath === originFilePath ? [filePath] : [filePath, originFilePath]
+
+  var respond = ['.js'].indexOf(extname) != -1 ? responseWithCharset : responseAdStream
+
+  for (var file of files) {
+    var responsed = await respond(file, ctx)
+    if (responsed) {
+      break
+    }
+  }
+
+  if (!responsed) {
+    return proxyToHttp(serverConfig, ctx)
+  }
+
+})
+
+if (config.host) {
+  app.listen(config.port || 80, config.host);
+} else {
+  app.listen(config.port || 80);
+}
