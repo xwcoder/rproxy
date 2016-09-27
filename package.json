@@ -2,13 +2,17 @@
   "name": "rproxy",
   "version": "1.0.0",
   "description": "rproxy ==========",
-  "main": "app.js",
+  "main": "index.js",
   "dependencies": {
+    "babel-plugin-syntax-async-functions": "^6.13.0",
+    "babel-plugin-transform-async-to-generator": "^6.8.0",
+    "babel-register": "^6.14.0",
     "http-proxy": "^1.15.1",
     "koa": "^2.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "sudo cross-env NODE_ENV=development nodemon"
   },
   "repository": {
     "type": "git",
@@ -22,6 +26,7 @@
   "homepage": "https://github.com/xwcoder/rproxy",
   "devDependencies": {
     "chai": "^3.5.0",
+    "cross-env": "^3.0.0",
     "mocha": "^3.0.2",
     "nodemon": "^1.10.2"
   }
