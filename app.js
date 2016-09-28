@@ -175,7 +175,7 @@ http.createServer(app.callback()).listen(port, host)
 
 https.createServer({
 
-  key: fs.readFileSync('./keys/server-key.pem'),
-  cert: fs.readFileSync('./keys/server-cert.pem')
+  key: fs.readFileSync('./sslkey/server-key.pem'),
+  cert: fs.readFileSync('./sslkey/server-cert.pem')
 
 }, app.callback()).listen(443, host)
