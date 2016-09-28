@@ -74,6 +74,24 @@ const responseWithCharset = async (file, ctx) => {
   return r
 }
 
+const responseAsStream = async (file, ctx) => {
+
+  var r = false
+
+  try {
+
+    var fd = openFile(filePath, 'r')
+    ctx.body = fs.createReadStream(null, {fd})
+
+    r = true
+  } catch (e) {
+  } finally {
+    if (fd) {
+      fs.close(fd)
+    }
+  }
+}
+
 const proxyToHttp = (serverConfig, ctx) => {
 
   var url = serverConfig.proxy_pass
@@ -90,24 +108,6 @@ const proxyToHttp = (serverConfig, ctx) => {
   proxy.web(ctx.req, ctx.res, {
     target: url
   })
-}
-
-const responseAdStream = async (file, ctx) => {
-
-  var r = false
-
-  try {
-
-    var fd = openFile(filePath, 'r')
-    ctx.body = fs.createReadStream(null, {fd})
-
-    r = true
-  } catch (e) {
-  } finally {
-    if (fd) {
-      fs.close(fd)
-    }
-  }
 }
 
 app.use(async (ctx, next) => {
@@ -151,7 +151,7 @@ app.use(async (ctx, next) => {
 
   var files = filePath === originFilePath ? [filePath] : [filePath, originFilePath]
 
-  var respond = ['.js'].indexOf(extname) != -1 ? responseWithCharset : responseAdStream
+  var respond = ['.js'].indexOf(extname) != -1 ? responseWithCharset : responseAsStream
 
   for (var file of files) {
     var responsed = await respond(file, ctx)
