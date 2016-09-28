@@ -1,6 +1,8 @@
 const PATH = require('path')
-const fs = require('fs')
 const mime = require('./lib/mime')
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
 const httpProxy = require('http-proxy')
 const Koa = require('koa')
 
@@ -166,8 +168,14 @@ app.use(async (ctx, next) => {
 
 })
 
-if (config.host) {
-  app.listen(config.port || 80, config.host);
-} else {
-  app.listen(config.port || 80);
-}
+const host = config.host || '0.0.0.0'
+const port = config.port || 80
+
+http.createServer(app.callback()).listen(port, host)
+
+https.createServer({
+
+  key: fs.readFileSync('./keys/server-key.pem'),
+  cert: fs.readFileSync('./keys/server-cert.pem')
+
+}, app.callback()).listen(443, host)
