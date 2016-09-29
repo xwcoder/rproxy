@@ -98,7 +98,7 @@ const proxyToHttp = (serverConfig, ctx) => {
 
   var url = serverConfig.proxy_pass
   if (!url) {
-    return ctx.status(405);
+    return ctx.status = 404
   }
 
   ctx.respond = false
