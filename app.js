@@ -20,37 +20,23 @@ const {configFilePath, config} = (x => {
     configFilePath = './' + configFilePath
   }
 
-  var config = require(configFilePath);
+  var config = require(configFilePath)
 
   return {config, configFilePath}
 
 })()
 
-const openFile = (path, flag) => {
+const host = config.host || '0.0.0.0'
+const port = config.port || 80
 
-  return new Promise((resolve, reject) => {
-    fs.open(path, flag, (err, fd) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(fd)
-      }
-    })
-  })
-}
+const openFile = (path, flag) =>
+  new Promise((resolve, reject) => fs.open(path, flag, (err, fd) => err ? reject(err) : resolve(fd)))
 
-const readFile = (file, options) => {
+const readFile = (file, options) =>
+  new Promise((resolve, reject) => fs.readFile(file, options, (err, data) => err ? reject(err) : resolve(data)))
 
-  return new Promise((resolve, reject) => {
-    fs.readFile(file, options, (err, data) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(data)
-      }
-    })
-  })
-}
+const isFile = path =>
+  new Promise((resolve, reject) => fs.stat(path, (err, stats) => err ? reject(err) : resolve(stats.isFile())))
 
 const responseWithCharset = async (file, ctx) => {
 
@@ -69,9 +55,7 @@ const responseWithCharset = async (file, ctx) => {
 
   } catch (e) {
   } finally {
-    if (fd) {
-      fs.close(fd)
-    }
+    if (fd) fs.close(fd)
   }
 
   return r
@@ -83,24 +67,23 @@ const responseAsStream = async (file, ctx) => {
 
   try {
 
-    var fd = openFile(filePath, 'r')
-    ctx.body = fs.createReadStream(null, {fd})
+    if (await isFile(file)) {
+      var fd = await openFile(file, 'r')
+      ctx.body = fs.createReadStream(file, {fd})
 
-    r = true
-  } catch (e) {
-  } finally {
-    if (fd) {
-      fs.close(fd)
+      r = true
     }
+
+  } catch (e) {
+    if (fd) fs.close(fd)
   }
+
+  return r
 }
 
 const proxyTo = (serverConfig, ctx) => {
 
   var url = serverConfig.proxy_pass
-  //if (!url) {
-  //  return ctx.status = 404
-  //}
 
   ctx.respond = false
 
@@ -128,12 +111,7 @@ app.use(async (ctx, next) => {
   var hostname = ctx.hostname
   var serverConfig
 
-  config.servers.some(item => {
-    if (item.name == hostname) {
-      serverConfig = item
-      return true
-    }
-  })
+  config.servers.some(item => !!(serverConfig = item.name == hostname ? item : false))
 
   if (!serverConfig) {
     ctx.status = 404
@@ -151,7 +129,8 @@ app.use(async (ctx, next) => {
 
   var extname = PATH.extname(path).toLowerCase()
 
-  ctx.type = mime[extname]
+  //ctx.type = mime[extname]
+  mime[extname] && ctx.set('Content-Type', mime[extname])
 
   var filePath = PATH.join(serverConfig.root, path)
   var originFilePath = PATH.join(serverConfig.root, ctx.path)
@@ -160,27 +139,21 @@ app.use(async (ctx, next) => {
 
   var respond = ['.js'].indexOf(extname) != -1 ? responseWithCharset : responseAsStream
 
+  var responsed = false
   for (var file of files) {
-    var responsed = await respond(file, ctx)
-    if (responsed) {
-      break
-    }
+    if (responsed = await respond(file, ctx)) break
   }
 
   if (!responsed) {
     return proxyTo(serverConfig, ctx)
   }
-
 })
-
-const host = config.host || '0.0.0.0'
-const port = config.port || 80
 
 http.createServer(app.callback()).listen(port, host)
 
 https.createServer({
 
-  key: fs.readFileSync('./sslkey/server-key.pem'),
-  cert: fs.readFileSync('./sslkey/server-cert.pem')
+  key: fs.readFileSync(PATH.join(__dirname, './sslkey/server-key.pem')),
+  cert: fs.readFileSync(PATH.join(__dirname, './sslkey/server-cert.pem'))
 
 }, app.callback()).listen(443, host)

@@ -13,7 +13,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cross-env NODE_ENV=development nodemon ./index.js config/config.js"
+    "dev": "cross-env NODE_ENV=development nodemon ./index.js config/config.js",
+    "start": "pm2 start index.js -- config/config.js"
   },
   "repository": {
     "type": "git",
