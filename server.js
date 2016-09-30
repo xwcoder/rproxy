@@ -103,6 +103,7 @@ const proxyTo = (serverConfig, ctx) => {
 app.use(async (ctx, next) => {
   ctx.configFilePath = configFilePath
   ctx.set('Access-Control-Allow-Origin', '*')
+  ctx.set('server', 'SohuTv-FE/node')
   await next()
 })
 
