@@ -9,3 +9,4 @@ config/cp.sh
 config/rename.sh
 sslkey/a1.itc.cn.cer
 sslkey/a1.itc.cn_server.key
+app*.js
