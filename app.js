@@ -5,6 +5,7 @@ const http = require('http')
 const https = require('https')
 const httpProxy = require('http-proxy')
 const Koa = require('koa')
+const ecstatic = require('ecstatic')
 
 const proxy = httpProxy.createProxyServer()
 const app = new Koa()
@@ -94,14 +95,18 @@ const responseAsStream = async (file, ctx) => {
   }
 }
 
-const proxyToHttp = (serverConfig, ctx) => {
+const proxyTo = (serverConfig, ctx) => {
 
   var url = serverConfig.proxy_pass
-  if (!url) {
-    return ctx.status = 404
-  }
+  //if (!url) {
+  //  return ctx.status = 404
+  //}
 
   ctx.respond = false
+
+  if (!url) {
+    return ecstatic({root: serverConfig.root})(ctx.req, ctx.res)
+  }
 
   if (!/^http(s)?:\/\//.test(url)) {
     url = ctx.protocol + '://' + url
@@ -136,7 +141,7 @@ app.use(async (ctx, next) => {
   }
 
   if (ctx.method === 'POST') {
-    return proxyToHttp(serverConfig, ctx)
+    return proxyTo(serverConfig, ctx)
   }
 
   var path = ctx.path
@@ -163,7 +168,7 @@ app.use(async (ctx, next) => {
   }
 
   if (!responsed) {
-    return proxyToHttp(serverConfig, ctx)
+    return proxyTo(serverConfig, ctx)
   }
 
 })
