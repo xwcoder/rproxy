@@ -1,2 +1,12 @@
 config/config.js
 node_modules/
+npm-debug.log
+config/config.js
+node_modules/
+npm-debug.log
+config/*.js
+config/cp.sh
+config/rename.sh
+sslkey/a1.itc.cn.cer
+sslkey/a1.itc.cn_server.key
+app*.js
