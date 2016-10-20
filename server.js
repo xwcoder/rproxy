@@ -88,7 +88,11 @@ const proxyTo = (serverConfig, ctx) => {
   ctx.respond = false
 
   if (!url) {
-    return ecstatic({root: serverConfig.root})(ctx.req, ctx.res)
+    return ecstatic({
+      root: serverConfig.root,
+      showDotfiles: false,
+      autoIndex: false
+    })(ctx.req, ctx.res)
   }
 
   if (!/^http(s)?:\/\//.test(url)) {
