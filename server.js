@@ -136,6 +136,13 @@ app.use(async (ctx, next) => {
   var filePath = PATH.join(serverConfig.root, path)
   var originFilePath = PATH.join(serverConfig.root, ctx.path)
 
+  var reg = new RegExp('^' + serverConfig.root)
+
+  if (!reg.test(filePath) || !reg.test(originFilePath)) {
+    ctx.status = 403
+    return ctx.body = 'path is unavailable'
+  }
+
   var files = filePath === originFilePath ? [filePath] : [filePath, originFilePath]
 
   var respond = ['.js'].indexOf(extname) != -1 ? responseWithCharset : responseAsStream
