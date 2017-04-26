@@ -9,4 +9,6 @@ config/cp.sh
 config/rename.sh
 sslkey/a1.itc.cn.cer
 sslkey/a1.itc.cn_server.key
+sslkey/tv.sohu.com.crt
+sslkey/tv.sohu.com.key
 app*.js

@@ -6,6 +6,7 @@ const https = require('https')
 const httpProxy = require('http-proxy')
 const Koa = require('koa')
 const ecstatic = require('ecstatic')
+const tls = require('tls')
 
 const proxy = httpProxy.createProxyServer()
 const app = new Koa()
@@ -163,7 +164,30 @@ app.use(async (ctx, next) => {
 
 http.createServer(app.callback()).listen(port, host)
 
+var securectx = {
+  'js.tv.itc.cn': tls.createSecureContext({
+    key: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn_server.key')),
+    cert: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn.cer'))
+  }),
+  'css.tv.itc.cn': tls.createSecureContext({
+    key: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn_server.key')),
+    cert: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn.cer'))
+  }),
+  'tv.sohu.com': tls.createSecureContext({
+    key: fs.readFileSync(PATH.join(__dirname, './sslkey/tv.sohu.com.key')),
+    cert: fs.readFileSync(PATH.join(__dirname, './sslkey/tv.sohu.com.crt'))
+  })
+}
+
 https.createServer({
+
+  SNICallback (servername, cb) {
+    if (securectx[servername]) {
+      cb(null, securectx[servername])
+    } else {
+      cb()
+    }
+  },
 
   key: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn_server.key')),
   cert: fs.readFileSync(PATH.join(__dirname, './sslkey/a1.itc.cn.cer'))
